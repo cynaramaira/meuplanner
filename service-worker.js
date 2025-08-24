@@ -1,43 +1,42 @@
 // Define um nome e versão para o cache
-const CACHE_NAME = 'planner-gamificado-v1';
+const CACHE_NAME = 'planner-gamificado-v2'; // Mudei para v2 para forçar a atualização
 
-// Lista de arquivos essenciais para o app funcionar offline
-// Como seu CSS e JS estão no HTML, só precisamos do próprio HTML.
+// Lista de TODOS os arquivos essenciais para o app funcionar offline
 const urlsToCache = [
-  '/',
-  'index.html'
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192x192.png',
+  './icon-512x512.png'
 ];
 
 // Evento 'install': é disparado quando o Service Worker é instalado.
-// Usamos para baixar e salvar os arquivos no cache.
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Cache aberto');
+        console.log('Cache aberto e arquivos sendo salvos');
         return cache.addAll(urlsToCache);
       })
   );
 });
 
-// Evento 'fetch': é disparado para cada requisição que a página faz (imagens, scripts, etc.).
-// Nós interceptamos a requisição e verificamos se já temos a resposta no cache.
+// Evento 'fetch': intercepta as requisições
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Se encontrarmos a resposta no cache, a retornamos.
+        // Se encontrar no cache, retorna do cache.
         if (response) {
           return response;
         }
-        // Se não, fazemos a requisição à rede normalmente.
+        // Se não, busca na rede.
         return fetch(event.request);
       })
   );
 });
 
-// Evento 'activate': é disparado quando o Service Worker é ativado.
-// Usado para limpar caches antigos se você atualizar a versão do CACHE_NAME.
+// Evento 'activate': limpa caches antigos
 self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
