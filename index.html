@@ -1,497 +1,615 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Planner Gamificado • Rotina Compassiva</title>
-  
-  <!-- PWA Meta Tags -->
-  <meta name="theme-color" content="#151923"/>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon-192x192.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planner Gamificado • Rotina Compassiva</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#764ba2"/>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icon-192x192.png">
 
-  <style>
-    :root{
-      --bg:#0f1115; --panel:#151923; --muted:#8a93a6; --text:#e8ecf3; --brand:#7aa2ff; --brand-2:#87f0c9; --danger:#ff7a7a; --ok:#9bff87;
-      --ring: 24px; --rad: 16px; --gap: 14px; --shadow: 0 10px 30px rgba(0,0,0,.35);
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0;background:linear-gradient(120deg,#0e1016,#121622 60%,#0f1520);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial;}
-    .app{max-width:1100px;margin:24px auto;padding:0 16px 80px}
-    header{
-      display:grid;grid-template-columns:1fr auto;align-items:center;gap:var(--gap);
-      background:linear-gradient(180deg,rgba(135,240,201,.10),rgba(122,162,255,.06));
-      border:1px solid rgba(255,255,255,.06);border-radius:24px;padding:20px;box-shadow:var(--shadow);
-    }
-    .title{font-weight:700;font-size:22px;letter-spacing:.3px}
-    .title small{display:block;color:var(--muted);font-weight:500;margin-top:4px}
-    .kpis{display:flex;gap:14px;flex-wrap:wrap}
-    .chip{display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);padding:8px 12px;border-radius:999px}
-    .chip b{font-variant-numeric:tabular-nums}
-    .progress{height:10px;border-radius:999px;background:rgba(255,255,255,.06);position:relative;overflow:hidden}
-    .progress>span{position:absolute;inset:0 0 0 auto;background:linear-gradient(90deg,var(--brand),var(--brand-2));width:0}
-    nav{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
-    .tab{border:none;background:rgba(255,255,255,.06);color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer;transition:.2s;}
-    .tab[aria-selected="true"]{background:linear-gradient(90deg,rgba(122,162,255,.22),rgba(135,240,201,.22));}
+    <!-- Tailwind CSS e Google Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Estilos personalizados inspirados no exemplo */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .task-item, .config-item {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .task-item:hover, .config-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-color: #a78bfa;
+        }
 
-    .grid{margin-top:18px;display:grid;gap:var(--gap);grid-template-columns:1.1fr .9fr}
-    @media (max-width:960px){.grid{grid-template-columns:1fr}}
-
-    .card{background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:var(--rad);box-shadow:var(--shadow)}
-    .card h2{font-size:16px;margin:0;padding:16px 16px 0;color:#cbd6ff}
-    .card .sub{color:var(--muted);font-size:13px;margin:6px 16px 0}
-    .card .body{padding:14px 16px 16px}
-
-    .task{display:flex;align-items:center;gap:12px;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);margin-top:10px}
-    .task input[type="checkbox"]{width:20px;height:20px}
-    .task .meta{margin-left:auto;display:flex;gap:10px;color:var(--muted);font-size:12px}
-    .task.done{opacity:.55; text-decoration:line-through}
-
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    .row input,.row select,.row button,.row textarea{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:var(--text)}
-    .row button{cursor:pointer}
-    .row .primary{background:linear-gradient(90deg,var(--brand),var(--brand-2));color:#0c1220;border:none}
-    .row .danger{background:rgba(255,122,122,.15);border-color:rgba(255,122,122,.35)}
-
-    .timer{display:flex;align-items:center;gap:10px;justify-content:space-between}
-    .timer .clock{font-size:40px;font-weight:700;letter-spacing:1px}
-
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:12px}
-
-    .list{margin-top:8px}
-    .list li{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px dashed rgba(255,255,255,.08);border-radius:10px;margin-top:8px}
-
-    .footer-note{margin-top:14px;color:var(--muted);font-size:12px}
-
-    .toggle{position:relative;width:48px;height:28px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);cursor:pointer}
-    .toggle .dot{position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
-    .toggle[aria-checked="true"]{background:linear-gradient(90deg,var(--brand),var(--brand-2))}
-    .toggle[aria-checked="true"] .dot{left:22px}
-
-    .empty{opacity:.7;border:1px dashed rgba(255,255,255,.2);padding:18px;border-radius:12px;text-align:center}
-  </style>
+        .task-checkbox:checked + .task-content {
+            opacity: 0.6;
+        }
+        
+        .task-checkbox:checked + .task-content .task-text {
+            text-decoration: line-through;
+        }
+        
+        .task-checkbox:checked + .task-content .task-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+            animation: bounce 0.6s ease;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 60%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            80% { transform: translateY(-5px); }
+        }
+        
+        .progress-ring {
+            transition: stroke-dasharray 0.8s ease;
+        }
+        
+        .tab-active {
+            background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+        
+        .streak-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+            to { box-shadow: 0 0 20px rgba(245, 158, 11, 0.8); }
+        }
+        
+        .level-up {
+            animation: levelUpPulse 1s ease-out;
+        }
+        
+        @keyframes levelUpPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .agenda-event {
+            background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+        }
+    </style>
 </head>
-<body>
-  <div class="app" id="app">
-    <header>
-      <div>
-        <div class="title">Rotina Compassiva • Planner Gamificado
-          <small id="greeting">––</small>
-        </div>
-        <div class="kpis" role="group" aria-label="Indicadores">
-          <div class="chip" title="Nível baseado em XP"><span>🔮</span> Nível <b id="level">1</b></div>
-          <div class="chip" title="Experiência total"><span>✨</span> XP <b id="xp">0</b></div>
-          <div class="chip" title="Sequência de dias concluídos"><span>🔥</span> Streak <b id="streak">0</b></div>
-          <div class="chip" title="Hoje é quarta? Terapia às 18h"><span>🧠</span> Terapia: <b id="therapy">–</b></div>
-        </div>
-        <div class="progress" aria-label="Progresso até o próximo nível"><span id="bar"></span></div>
-        <nav role="tablist" aria-label="Navegação">
-          <button class="tab" role="tab" aria-selected="true" data-tab="hoje">Hoje</button>
-          <button class="tab" role="tab" aria-selected="false" data-tab="semana">Semana</button>
-          <button class="tab" role="tab" aria-selected="false" data-tab="config">Configurar</button>
-        </nav>
-      </div>
-      <div class="row" style="justify-content:flex-end;align-items:center">
-        <label class="pill" title="Modo seguro para ônibus: foca em áudio e leitura offline">
-          🚍 Modo ônibus
-          <span id="busToggle" class="toggle" role="switch" aria-checked="false"><i class="dot"></i></span>
-        </label>
-        <label class="pill" title="Tema claro/escuro">
-          🌓 Tema
-          <span id="themeToggle" class="toggle" role="switch" aria-checked="false"><i class="dot"></i></span>
-        </label>
-      </div>
-    </header>
+<body class="min-h-screen p-4 sm:p-8 flex items-start justify-center">
 
-    <section id="view-hoje" class="grid" role="tabpanel" aria-labelledby="Hoje">
-      <div class="card">
-        <h2>Rituais da Manhã</h2>
-        <p class="sub">Acordar suave (04h00–04h30), água na cabeceira, banho, café, roupa, alongamento de 5′.</p>
-        <div class="body" id="morning"></div>
-      </div>
-
-      <div class="card">
-        <h2>Timer de Foco</h2>
-        <p class="sub">Use blocos curtos (ex.: 25′ foco / 5′ pausa). Sem punição, só cuidado.</p>
-        <div class="body">
-          <div class="timer">
-            <div class="clock" id="clock">25:00</div>
-            <div class="row">
-              <button class="primary" id="start">Iniciar</button>
-              <button id="pause">Pausar</button>
-              <button id="reset">Zerar</button>
-              <select id="preset">
-                <option value="25">25′ Foco</option>
-                <option value="15">15′ Foco</option>
-                <option value="5">5′ Respiro</option>
-              </select>
+    <div class="w-full max-w-5xl mx-auto glass-card rounded-3xl shadow-2xl p-4 sm:p-8 relative overflow-hidden">
+        
+        <!-- Cabeçalho com Level e Streak -->
+        <header class="text-center mb-6 relative">
+            <div class="flex justify-between items-start mb-3">
+                <div class="streak-badge text-white px-3 py-1 rounded-full text-sm font-semibold">
+                    🔥 <span id="streak">0</span> dias
+                </div>
+                <div class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                    🔮 Nível <span id="level">1</span>
+                </div>
             </div>
-          </div>
-          <p class="footer-note">Dica junguiana: comece pequeno, honrando o ritmo do corpo. Um bloco feito já conta.</p>
+            <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Rotina Compassiva
+            </h1>
+            <p id="greeting" class="text-gray-600 text-sm">Carregando data... 🌟</p>
+        </header>
+
+        <!-- Progresso Circular -->
+        <div class="flex justify-center mb-6">
+            <div class="relative w-24 h-24">
+                <svg class="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="40" stroke="#e5e7eb" stroke-width="8" fill="none"/>
+                    <circle id="bar" cx="50" cy="50" r="40" stroke="url(#gradient)" stroke-width="8" 
+                            fill="none" stroke-linecap="round" class="progress-ring"
+                            stroke-dasharray="0 251.2" />
+                    <defs>
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#a78bfa"/>
+                            <stop offset="100%" style="stop-color:#ec4899"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span id="xp" class="text-lg font-bold text-gray-700">0 XP</span>
+                </div>
+            </div>
         </div>
-      </div>
 
-      <div class="card">
-        <h2>Trabalho (07h–13h30)</h2>
-        <p class="sub">Blocos: matérias, redes, edição, pequenas pausas.</p>
-        <div class="body" id="work"></div>
-      </div>
-
-      <div class="card">
-        <h2>Chegada em Casa</h2>
-        <p class="sub">Mini-ritual de 15′ + rota descanso ou pequena ação.</p>
-        <div class="body" id="home"></div>
-      </div>
-
-      <div class="card">
-        <h2>Autoacolhimento</h2>
-        <div class="body">
-          <div class="row" style="width:100%">
-            <textarea id="journal" rows="3" style="flex:1" placeholder="O que eu sustentei hoje?"></textarea>
-            <button id="saveJournal" class="primary">Salvar</button>
-          </div>
-          <p class="footer-note">Pergunta anti-autocrítica: “o que eu já sustentei hoje?”</p>
+        <!-- Abas de Navegação -->
+        <div class="flex justify-center mb-6 bg-gray-100 rounded-2xl p-1 max-w-lg mx-auto">
+            <button data-tab="hoje" class="tab tab-active py-2 px-4 font-medium rounded-xl transition-all duration-300 flex-1 text-sm">
+                📅 Hoje
+            </button>
+            <button data-tab="semana" class="tab py-2 px-4 font-medium text-gray-600 rounded-xl transition-all duration-300 flex-1 text-sm">
+                📊 Semana
+            </button>
+             <button data-tab="agenda" class="tab py-2 px-4 font-medium text-gray-600 rounded-xl transition-all duration-300 flex-1 text-sm">
+                🗓️ Agenda
+            </button>
+            <button data-tab="config" class="tab py-2 px-4 font-medium text-gray-600 rounded-xl transition-all duration-300 flex-1 text-sm">
+                ⚙️ Configurar
+            </button>
         </div>
-      </div>
-    </section>
 
-    <section id="view-semana" class="grid" style="display:none" role="tabpanel" aria-labelledby="Semana">
-      <div class="card">
-        <h2>Planejamento da Semana</h2>
-        <p class="sub">Escolha 1 prioridade por dia. Fins de semana: alternar família / namorado.</p>
-        <div class="body" id="week"></div>
-      </div>
-      <div class="card">
-        <h2>Rotas de Fim de Semana</h2>
-        <p class="sub">Defina o plano para este sábado e domingo.</p>
-        <div class="body">
-          <div class="row">
-            <select id="weekendPlan">
-              <option value="livre">Livre</option>
-              <option value="familia">Viagem à família (ônibus 15h • chegada ~19h • voltar sáb noite ou dom manhã)</option>
-              <option value="namorado">Visita ao namorado (saída sábado tarde • volta domingo noite)</option>
-            </select>
-            <button id="saveWeekend" class="primary">Salvar</button>
-          </div>
-          <ul id="weekendList" class="list"></ul>
-        </div>
-      </div>
-    </section>
+        <!-- Conteúdo das Abas -->
+        <main>
+            <!-- Missões de Hoje -->
+            <section id="view-hoje" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <h2 class="font-bold text-indigo-800">☀️ Rituais da Manhã</h2>
+                    <div id="morning" class="space-y-3 mt-2"></div>
+                </div>
+                <div>
+                    <h2 class="font-bold text-indigo-800">💼 Trabalho</h2>
+                    <div id="work" class="space-y-3 mt-2"></div>
+                </div>
+                <div class="lg:col-span-2">
+                    <h2 class="font-bold text-indigo-800">🏡 Chegada em Casa & Bem-estar</h2>
+                    <div id="home" class="space-y-3 mt-2"></div>
+                </div>
+            </section>
 
-    <section id="view-config" class="grid" style="display:none" role="tabpanel" aria-labelledby="Configurar">
-      <div class="card">
-        <h2>Hábitos & Missões (editar)</h2>
-        <p class="sub">Adapte tarefas, pontos e categorias. Tudo fica salvo no seu navegador.</p>
-        <div class="body">
-          <div class="row">
-            <input id="newTitle" placeholder="Nome da tarefa" />
-            <select id="newCat">
-              <option>Manhã</option>
-              <option>Trabalho</option>
-              <option>Casa</option>
-              <option>Bem-estar</option>
-              <option>Criatividade</option>
-              <option>Pós</option>
-            </select>
-            <input id="newXP" type="number" min="1" max="50" value="5" style="width:90px"/>
-            <button id="addTask" class="primary">Adicionar</button>
-          </div>
-          <ul id="taskList" class="list"></ul>
-        </div>
-      </div>
+            <!-- Visão da Semana -->
+            <section id="view-semana" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <!-- O conteúdo da semana será inserido aqui pelo JS -->
+            </section>
+            
+            <!-- Agenda da Semana -->
+            <section id="view-agenda" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+                 <!-- O conteúdo da agenda será inserido aqui pelo JS -->
+            </section>
 
-      <div class="card">
-        <h2>Preferências</h2>
-        <p class="sub">Personalize horários e metas gentis.</p>
-        <div class="body">
-          <div class="row">
-            <label class="pill">⏰ Acordar até <input id="wakeBy" type="time" value="04:30"></label>
-            <label class="pill">💤 Dormir às <input id="sleepAt" type="time" value="21:30"></label>
-            <label class="pill">🎯 XP por nível <input id="xpPerLevel" type="number" value="100" style="width:90px"></label>
-            <button id="savePrefs" class="primary">Salvar preferências</button>
-          </div>
-          <p class="footer-note">Sem rigidez: metas são faróis, não grades.</p>
-        </div>
-      </div>
-    </section>
-  </div>
+            <!-- Configurações -->
+            <section id="view-config" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <!-- O conteúdo de configurações será inserido aqui pelo JS -->
+            </section>
+        </main>
+    </div>
 
-  <script>
-    const $ = (sel, ctx=document)=>ctx.querySelector(sel);
-    const $$ = (sel, ctx=document)=>Array.from(ctx.querySelectorAll(sel));
+    <script>
+        // --- SEU SCRIPT ORIGINAL ADAPTADO ---
+        const $ = (sel, ctx = document) => ctx.querySelector(sel);
+        const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
-    const store = {
-      get(k, d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d }catch{ return d } },
-      set(k, v){ localStorage.setItem(k, JSON.stringify(v)) }
-    }
+        const store = {
+            get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } },
+            set(k, v) { localStorage.setItem(k, JSON.stringify(v)) }
+        }
 
-    const state = {
-      xp: store.get('xp', 0),
-      streak: store.get('streak', 0),
-      lastCheck: store.get('lastCheck', ''),
-      level: 1,
-      prefs: store.get('prefs', { wakeBy:'04:30', sleepAt:'21:30', xpPerLevel:100, theme:'dark', bus:false, weekend:'livre' }),
-      tasks: store.get('tasks', [
-        {id:cid(), title:'Beber água ao acordar', cat:'Manhã', xp:5},
-        {id:cid(), title:'Banho + café + roupa', cat:'Manhã', xp:5},
-        {id:cid(), title:'Alongar 5 minutos', cat:'Manhã', xp:5},
-        {id:cid(), title:'Podcast/Audiobook no trajeto', cat:'Manhã', xp:5},
+        const state = {
+            xp: store.get('xp', 0),
+            streak: store.get('streak', 0),
+            lastCheck: store.get('lastCheck', ''),
+            level: 1,
+            prefs: store.get('prefs', { wakeBy: '04:30', sleepAt: '21:30', xpPerLevel: 100, theme: 'dark', bus: false, weekend: 'livre' }),
+            tasks: store.get('tasks', [
+                { id: cid(), title: 'Beber água ao acordar', cat: 'Manhã', xp: 5 },
+                { id: cid(), title: 'Banho + café + roupa', cat: 'Manhã', xp: 5 },
+                { id: cid(), title: 'Alongar 5 minutos', cat: 'Manhã', xp: 5 },
+                { id: cid(), title: 'Podcast/Audiobook no trajeto', cat: 'Manhã', xp: 5 },
+                { id: cid(), title: 'Escrever 2 matérias', cat: 'Trabalho', xp: 10 },
+                { id: cid(), title: 'Redes (posts/Buffer)', cat: 'Trabalho', xp: 8 },
+                { id: cid(), title: 'Edição (áudio/vídeo)', cat: 'Trabalho', xp: 8 },
+                { id: cid(), title: '3-min pausa para água e respiração', cat: 'Trabalho', xp: 4 },
+                { id: cid(), title: 'Mini-ritual de chegada (15′)', cat: 'Casa', xp: 8 },
+                { id: cid(), title: 'Cuidar da Eve 5′', cat: 'Casa', xp: 5 },
+                { id: cid(), title: 'Arrumar 15′ com timer', cat: 'Casa', xp: 6 },
+                { id: cid(), title: 'Preparar comida do dia seguinte', cat: 'Casa', xp: 8 },
+                { id: cid(), title: 'Exercício leve 20–30′', cat: 'Bem-estar', xp: 12 },
+                { id: cid(), title: 'Jornal anti-autocrítica', cat: 'Bem-estar', xp: 6 },
+                { id: cid(), title: 'Crochê/Pintura/Leitura 20′', cat: 'Criatividade', xp: 8 },
+                { id: cid(), title: 'Pós EaD 20–30′ (ou revisão)', cat: 'Pós', xp: 10 },
+            ]),
+            doneToday: store.get('doneToday', {}),
+            journal: store.get('journal', {}),
+            weeklyGoals: store.get('weeklyGoals', []),
+            doneWeekly: store.get('doneWeekly', {}),
+            agendaEvents: store.get('agendaEvents', {}),
+        }
 
-        {id:cid(), title:'Escrever 2 matérias', cat:'Trabalho', xp:10},
-        {id:cid(), title:'Redes (posts/Buffer)', cat:'Trabalho', xp:8},
-        {id:cid(), title:'Edição (áudio/vídeo)', cat:'Trabalho', xp:8},
-        {id:cid(), title:'3-min pausa para água e respiração', cat:'Trabalho', xp:4},
+        function cid() { return Math.random().toString(36).slice(2, 9) }
 
-        {id:cid(), title:'Mini-ritual de chegada (15′)', cat:'Casa', xp:8},
-        {id:cid(), title:'Cuidar da Eve 5′', cat:'Casa', xp:5},
-        {id:cid(), title:'Arrumar 15′ com timer', cat:'Casa', xp:6},
-        {id:cid(), title:'Preparar comida do dia seguinte', cat:'Casa', xp:8},
+        function computeLevel() {
+            const per = +state.prefs.xpPerLevel || 100;
+            const oldLevel = state.level;
+            state.level = Math.floor(state.xp / per) + 1;
+            
+            if (state.level > oldLevel) {
+                const levelEl = $('#level');
+                levelEl.parentElement.classList.add('level-up');
+                setTimeout(() => levelEl.parentElement.classList.remove('level-up'), 1000);
+            }
 
-        {id:cid(), title:'Exercício leve 20–30′', cat:'Bem-estar', xp:12},
-        {id:cid(), title:'Jornal anti-autocrítica', cat:'Bem-estar', xp:6},
+            const into = state.xp % per;
+            const pct = Math.min(100, (into / per) * 100);
+            
+            const circumference = 2 * Math.PI * 40;
+            const strokeDasharray = (pct / 100) * circumference;
 
-        {id:cid(), title:'Crochê/Pintura/Leitura 20′', cat:'Criatividade', xp:8},
-        {id:cid(), title:'Pós EaD 20–30′ (ou revisão)', cat:'Pós', xp:10},
-      ]),
-      doneToday: store.get('doneToday', {}),
-      journal: store.get('journal', {}),
-    }
+            $('#level').textContent = state.level;
+            $('#xp').textContent = `${state.xp} XP`;
+            $('#bar').style.strokeDasharray = `${strokeDasharray} ${circumference}`;
+        }
 
-    function cid(){ return Math.random().toString(36).slice(2,9) }
+        function refreshHeader() {
+            const now = new Date();
+            const date = now.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+            $('#greeting').textContent = date.charAt(0).toUpperCase() + date.slice(1);
+        }
 
-    // Level calc
-    function computeLevel(){
-      const per = +state.prefs.xpPerLevel || 100; 
-      state.level = Math.floor(state.xp / per) + 1;
-      const into = state.xp % per;
-      $('#level').textContent = state.level;
-      $('#xp').textContent = state.xp;
-      const pct = Math.min(100, (into / per) * 100);
-      $('#bar').style.width = pct + '%';
-    }
+        $$('.tab').forEach(btn => btn.addEventListener('click', () => {
+            $$('.tab').forEach(b => b.classList.remove('tab-active'));
+            btn.classList.add('tab-active');
+            const tab = btn.dataset.tab;
+            $$('main > section').forEach(s => s.classList.add('hidden'));
+            $(`#view-${tab}`).classList.remove('hidden');
+        }));
 
-    // Greeting & therapy
-    function refreshHeader(){
-      const now = new Date();
-      const wd = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][now.getDay()];
-      const date = now.toLocaleDateString('pt-BR',{weekday:'long', day:'2-digit', month:'long'});
-      $('#greeting').textContent = date.charAt(0).toUpperCase()+date.slice(1);
-      $('#therapy').textContent = (now.getDay()===3? 'Hoje 18h':'Não hoje');
-    }
+        function section(container, filter) {
+            container.innerHTML = '';
+            const todayId = todayKey();
+            const items = state.tasks.filter(t => filter(t)).map(t => {
+                const el = document.createElement('div');
+                el.className = 'task-item bg-white rounded-2xl p-3 shadow-sm';
+                const done = !!(state.doneToday[todayId] && state.doneToday[todayId][t.id]);
+                
+                el.innerHTML = `
+                    <label for="task-${t.id}" class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="task-${t.id}" class="task-checkbox hidden" ${done ? 'checked' : ''}>
+                        <div class="task-content flex items-center space-x-3 flex-1 transition-all duration-300">
+                            <div class="task-icon w-10 h-10 rounded-xl flex items-center justify-center text-lg ${done ? 'bg-green-500 text-white' : 'bg-gray-100'}">
+                                ${done ? '✅' : '📝'}
+                            </div>
+                            <div class="flex-1">
+                                <p class="task-text font-medium text-gray-800">${t.title}</p>
+                                <p class="text-xs text-gray-500">${t.cat} · +${t.xp} XP</p>
+                            </div>
+                        </div>
+                    </label>
+                `;
+                $('input', el).addEventListener('change', (e) => toggleDone(t, e.target.checked, el));
+                return el;
+            })
+            if (items.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 p-4">Nenhuma tarefa aqui.</div>`;
+            } else items.forEach(n => container.appendChild(n));
+        }
 
-    // Tabs
-    $$('.tab').forEach(btn=>btn.addEventListener('click',()=>{
-      $$('.tab').forEach(b=>b.setAttribute('aria-selected','false'));
-      btn.setAttribute('aria-selected','true');
-      const tab = btn.dataset.tab;
-      $('#view-hoje').style.display = tab==='hoje'? 'grid':'none';
-      $('#view-semana').style.display = tab==='semana'? 'grid':'none';
-      $('#view-config').style.display = tab==='config'? 'grid':'none';
-    }))
+        function buildUI() {
+            section($('#morning'), t => t.cat === 'Manhã');
+            section($('#work'), t => t.cat === 'Trabalho');
+            section($('#home'), t => ['Casa', 'Bem-estar', 'Criatividade', 'Pós'].includes(t.cat));
+            buildConfig();
+            buildWeek();
+            buildAgenda();
+            computeLevel();
+            refreshHeader();
+            updateStreak();
+        }
 
-    // Build sections
-    function section(container, filter){
-      container.innerHTML = '';
-      const todayId = todayKey();
-      const items = state.tasks.filter(t=>filter(t)).map(t=>{
-        const el = document.createElement('div');
-        el.className = 'task';
-        const done = !!(state.doneToday[todayId] && state.doneToday[todayId][t.id]);
-        if(done) el.classList.add('done');
-        el.innerHTML = `
-          <input type="checkbox" ${done?'checked':''} aria-label="Concluir ${t.title}">
-          <div style="flex:1">
-            <div style="font-weight:600">${t.title}</div>
-            <div class="meta">${t.cat} · <span>+${t.xp} XP</span></div>
-          </div>
-          <button aria-label="Remover tarefa" title="Remover" data-remove="${t.id}" class="row danger">✕</button>
-        `;
-        $('input', el).addEventListener('change', (e)=>toggleDone(t, e.target.checked, el));
-        $('[data-remove]', el).addEventListener('click', ()=>removeTask(t.id));
-        return el;
-      })
-      if(items.length===0){
-        const empty = document.createElement('div'); empty.className='empty'; empty.textContent='Nenhuma tarefa aqui. Adicione em Configurar → Hábitos & Missões.'; container.appendChild(empty)
-      } else items.forEach(n=>container.appendChild(n));
-    }
+        function todayKey() { const d = new Date(); return d.toISOString().slice(0, 10) }
 
-    function buildUI(){
-      section($('#morning'), t=>t.cat==='Manhã');
-      section($('#work'), t=>t.cat==='Trabalho');
-      section($('#home'), t=>['Casa','Bem-estar','Criatividade','Pós'].includes(t.cat));
-      buildConfig();
-      buildWeek();
-      computeLevel();
-      refreshHeader();
-      updateToggles();
-      updateStreak();
-      renderWeekend();
-    }
+        function toggleDone(task, checked, el) {
+            const key = todayKey();
+            state.doneToday[key] = state.doneToday[key] || {};
+            const iconDiv = $('.task-icon', el);
 
-    // Done / XP / Streak
-    function todayKey(){ const d=new Date(); return d.toISOString().slice(0,10) }
+            if (checked) {
+                if (!state.doneToday[key][task.id]) { state.doneToday[key][task.id] = true; state.xp += task.xp; }
+                iconDiv.innerHTML = '✅';
+            } else {
+                if (state.doneToday[key][task.id]) { delete state.doneToday[key][task.id]; state.xp = Math.max(0, state.xp - task.xp); }
+                iconDiv.innerHTML = '📝';
+            }
+            persist();
+            computeLevel();
+            updateStreak();
+        }
 
-    function toggleDone(task, checked, el){
-      const key = todayKey();
-      state.doneToday[key] = state.doneToday[key] || {};
-      if(checked){
-        if(!state.doneToday[key][task.id]){ state.doneToday[key][task.id]=true; state.xp += task.xp; toast(`+${task.xp} XP • ${task.title}`) }
-        el.classList.add('done');
-      } else {
-        if(state.doneToday[key][task.id]){ delete state.doneToday[key][task.id]; state.xp = Math.max(0, state.xp - task.xp); toast(`−${task.xp} XP • ${task.title}`) }
-        el.classList.remove('done');
-      }
-      persist(); computeLevel(); updateStreak();
-    }
+        function updateStreak() {
+            const today = todayKey();
+            if (state.lastCheck !== today) {
+                const y = new Date(); y.setDate(y.getDate() - 1); const yKey = y.toISOString().slice(0, 10);
+                const doneY = state.doneToday[yKey] && Object.keys(state.doneToday[yKey]).length > 0;
+                const doneT = state.doneToday[today] && Object.keys(state.doneToday[today]).length > 0;
+                if (doneT) { 
+                    state.streak = doneY ? state.streak + 1 : 1; 
+                    state.lastCheck = today; 
+                } else if (!doneY) {
+                    const y2 = new Date(); y2.setDate(y2.getDate() - 2); const y2Key = y2.toISOString().slice(0, 10);
+                    if (!state.doneToday[y2Key] || Object.keys(state.doneToday[y2Key]).length === 0) {
+                         state.streak = 0;
+                    }
+                }
+                store.set('lastCheck', state.lastCheck);
+            }
+            $('#streak').textContent = state.streak;
+        }
 
-    function updateStreak(){
-      const today = todayKey();
-      if(state.lastCheck !== today){
-        // if yesterday had any done, maintain streak; else reset
-        const y = new Date(); y.setDate(y.getDate()-1); const yKey = y.toISOString().slice(0,10);
-        const doneY = state.doneToday[yKey] && Object.keys(state.doneToday[yKey]).length>0;
-        const doneT = state.doneToday[today] && Object.keys(state.doneToday[today]).length>0;
-        if(doneT){ state.streak = doneY? state.streak+1 : 1; state.lastCheck = today; }
-        store.set('lastCheck', state.lastCheck);
-      }
-      $('#streak').textContent = state.streak;
-    }
+        function buildConfig() {
+            const container = $('#view-config');
+            container.innerHTML = `
+                <div class="bg-white p-4 rounded-2xl shadow-sm config-item">
+                    <h3 class="font-bold text-indigo-800 mb-3">Adicionar Nova Tarefa Diária</h3>
+                    <div class="space-y-3">
+                        <input id="newTitle" placeholder="Nome da tarefa" class="w-full p-2 border rounded-lg">
+                        <select id="newCat" class="w-full p-2 border rounded-lg">
+                            <option>Manhã</option><option>Trabalho</option><option>Casa</option>
+                            <option>Bem-estar</option><option>Criatividade</option><option>Pós</option>
+                        </select>
+                        <input id="newXP" type="number" value="5" placeholder="Pontos de XP" class="w-full p-2 border rounded-lg">
+                        <button id="addTask" class="w-full bg-purple-500 text-white font-semibold py-2 rounded-lg hover:bg-purple-600 transition-colors">Adicionar Tarefa</button>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm config-item">
+                    <div id="taskList" class="space-y-3"></div>
+                </div>
+            `;
+            
+            const list = $('#taskList');
+            list.innerHTML = `<h3 class="font-bold text-indigo-800 mb-3">Tarefas Atuais</h3>` + 
+            state.tasks.map(t => `
+                <div class="bg-white p-3 rounded-xl flex justify-between items-center text-sm">
+                    <span>${t.title} <span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full">${t.cat} / +${t.xp}XP</span></span>
+                    <button data-del="${t.id}" class="text-red-500 hover:text-red-700 font-bold">✕</button>
+                </div>
+            `).join('');
 
-    // Config tasks
-    function buildConfig(){
-      const list = $('#taskList'); list.innerHTML='';
-      state.tasks.forEach(t=>{
-        const li=document.createElement('li');
-        li.innerHTML=`<span style="display:flex;gap:10px;align-items:center"><b>${t.title}</b><small class="pill">${t.cat}</small><small class="pill">+${t.xp} XP</small></span>
-        <span class="row"><button data-edit="${t.id}">Editar</button><button class="danger" data-del="${t.id}">Excluir</button></span>`;
-        list.appendChild(li);
-        $('[data-del]',li).addEventListener('click',()=>removeTask(t.id));
-        $('[data-edit]',li).addEventListener('click',()=>editTask(t.id));
-      })
-      if(!state.tasks.length){ const li=document.createElement('li'); li.textContent='Sem tarefas. Adicione acima.'; list.appendChild(li) }
-    }
+            $$('[data-del]').forEach(btn => btn.addEventListener('click', () => removeTask(btn.dataset.del)));
+            $('#addTask').addEventListener('click', () => {
+                const title = $('#newTitle').value.trim(); if (!title) return;
+                const cat = $('#newCat').value; const xp = parseInt($('#newXP').value || '5', 10);
+                state.tasks.push({ id: cid(), title, cat, xp });
+                persist(); buildUI();
+            });
+        }
 
-    function removeTask(id){
-      state.tasks = state.tasks.filter(t=>t.id!==id);
-      persist(); buildUI();
-    }
+        function removeTask(id) {
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            persist(); buildUI();
+        }
+        
+        function buildWeek() {
+            const container = $('#view-semana');
+            container.innerHTML = `
+                <div class="bg-white p-4 rounded-2xl shadow-sm config-item">
+                    <h3 class="font-bold text-indigo-800 mb-3">Prioridades Diárias</h3>
+                    <div id="week-planner" class="space-y-3"></div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm config-item">
+                    <h3 class="font-bold text-indigo-800 mb-3">Metas Gerais da Semana</h3>
+                    <div class="space-y-3 mb-3">
+                        <input id="newWeeklyGoalTitle" placeholder="Ex: Fazer terapia" class="w-full p-2 border rounded-lg">
+                        <button id="addWeeklyGoalBtn" class="w-full bg-purple-500 text-white font-semibold py-2 rounded-lg hover:bg-purple-600 transition-colors">Adicionar Meta</button>
+                    </div>
+                    <div id="weekly-goals-list" class="space-y-2"></div>
+                </div>
+            `;
+            
+            const planner = $('#week-planner');
+            const days = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+            planner.innerHTML = days.map(d => `
+                <div class="flex items-center space-x-2">
+                    <span class="font-semibold w-10">${d}:</span>
+                    <input data-day="${d}" value="${store.get('prio-' + d, '') || ''}" placeholder="Prioridade do dia" class="flex-1 p-2 border rounded-lg text-sm">
+                </div>
+            `).join('');
 
-    function editTask(id){
-      const t = state.tasks.find(x=>x.id===id); if(!t) return;
-      const title = prompt('Novo título da tarefa:', t.title) ?? t.title;
-      const cat = prompt('Categoria (Manhã, Trabalho, Casa, Bem-estar, Criatividade, Pós):', t.cat) ?? t.cat;
-      const xp = parseInt(prompt('XP (1-50):', t.xp) ?? t.xp, 10);
-      t.title = title.trim()||t.title; t.cat=cat.trim()||t.cat; t.xp = isNaN(xp)? t.xp : Math.max(1, Math.min(50, xp));
-      persist(); buildUI();
-    }
+            $$('#week-planner input').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    store.set('prio-' + e.target.dataset.day, e.target.value);
+                });
+            });
 
-    $('#addTask').addEventListener('click',()=>{
-      const title = $('#newTitle').value.trim(); if(!title) return alert('Dê um nome à tarefa.');
-      const cat = $('#newCat').value; const xp = Math.max(1, Math.min(50, parseInt($('#newXP').value||'5',10)));
-      state.tasks.push({id:cid(), title, cat, xp});
-      $('#newTitle').value=''; $('#newXP').value='5';
-      persist(); buildUI();
-    })
+            $('#addWeeklyGoalBtn').addEventListener('click', addWeeklyGoal);
+            renderWeeklyGoals();
+        }
 
-    // Preferences
-    $('#savePrefs').addEventListener('click',()=>{
-      state.prefs.wakeBy = $('#wakeBy').value || '04:30';
-      state.prefs.sleepAt = $('#sleepAt').value || '21:30';
-      state.prefs.xpPerLevel = Math.max(20, parseInt($('#xpPerLevel').value||'100',10));
-      persist(); computeLevel(); toast('Preferências salvas');
-    })
+        function addWeeklyGoal() {
+            const titleInput = $('#newWeeklyGoalTitle');
+            const title = titleInput.value.trim();
+            if (!title) return;
+            state.weeklyGoals.push({ id: cid(), title: title });
+            titleInput.value = '';
+            persist();
+            renderWeeklyGoals();
+        }
 
-    // Weekend planner
-    function renderWeekend(){
-      $('#weekendPlan').value = state.prefs.weekend || 'livre';
-      const list = $('#weekendList'); list.innerHTML='';
-      const plan = state.prefs.weekend;
-      const items = {
-        livre: ['Escolher 1 prioridade de bem-estar','Hobby criativo 20′','Arrumação leve 15′'],
-        familia: ['Ônibus 15h • chegada ~19h','Alinhar volta com seu pai','Momentos com família sem culpa','Dormir bem para retorno'],
-        namorado: ['Saída sábado à tarde','Desconectar e curtir o encontro','Volta domingo à noite','Preparar segunda (comida/roupa)']
-      }[plan] || [];
-      items.forEach(txt=>{ const li=document.createElement('li'); li.textContent=txt; list.appendChild(li) })
-    }
-    $('#saveWeekend').addEventListener('click',()=>{ state.prefs.weekend = $('#weekendPlan').value; persist(); renderWeekend(); toast('Fim de semana definido') })
+        function renderWeeklyGoals() {
+            const listContainer = $('#weekly-goals-list');
+            if (!listContainer) return;
 
-    // Week grid quick plan
-    function buildWeek(){
-      const box = $('#week'); box.innerHTML='';
-      const days = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
-      const wrap = document.createElement('div'); wrap.style.display='grid'; wrap.style.gap='12px'; wrap.style.gridTemplateColumns='repeat( auto-fit, minmax(220px,1fr) )';
-      days.forEach(d=>{
-        const c = document.createElement('div'); c.className='card'; c.innerHTML=`<h2>${d}</h2><div class="body">
-          <input placeholder="Prioridade do dia" data-day="${d}" value="${store.get('prio-'+d,'')||''}" style="width:100%;margin-bottom:8px"/>
-          <button data-save="${d}" class="primary">Salvar</button>
-        </div>`; wrap.appendChild(c);
-      })
-      box.appendChild(wrap);
-      $$('[data-save]', wrap).forEach(btn=>btn.addEventListener('click',()=>{
-        const d = btn.getAttribute('data-save'); const v = $(`[data-day="${d}"]`, wrap).value; store.set('prio-'+d, v); toast('Prioridade salva para '+d)
-      }))
-    }
+            const weekKey = getWeekKey(new Date());
 
-    // Journal
-    $('#saveJournal').addEventListener('click',()=>{
-      const key = todayKey(); state.journal[key] = $('#journal').value; persist(); toast('Anotação salva')
-    })
+            if (!state.doneWeekly[weekKey]) {
+                state.doneWeekly[weekKey] = {};
+            }
 
-    // Timer
-    let tLeft = 25*60, tId=null, running=false;
-    function renderClock(){ const m=Math.floor(tLeft/60).toString().padStart(2,'0'); const s=(tLeft%60).toString().padStart(2,'0'); $('#clock').textContent = `${m}:${s}` }
-    $('#preset').addEventListener('change', e=>{ tLeft = parseInt(e.target.value,10)*60; renderClock() })
-    $('#start').addEventListener('click',()=>{ if(running) return; running=true; tId=setInterval(()=>{ tLeft--; renderClock(); if(tLeft<=0){ clearInterval(tId); running=false; toast('Tempo concluído. Faça uma pausa gentil.'); new Audio(beep()).play(); } },1000) })
-    $('#pause').addEventListener('click',()=>{ running=false; clearInterval(tId) })
-    $('#reset').addEventListener('click',()=>{ running=false; clearInterval(tId); tLeft = parseInt($('#preset').value,10)*60; renderClock() })
-    function beep(){
-      // tiny wav beep (data URI)
-      return 'data:audio/wav;base64,UklGRp4AAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYAAAEsAAACABYAAABiAAAAbwAAAF4AAABMAAAAbwAAAGIAAABXAAAARQAAAF4AAABkAAAASAAAAD4AAAAvAAAAJQAAACAAAABtZWFuYmVlcA=='
-    }
+            if (state.weeklyGoals.length === 0) {
+                listContainer.innerHTML = `<p class="text-center text-gray-500 text-sm p-2">Nenhuma meta geral para a semana.</p>`;
+                return;
+            }
 
-    // Toggles theme & bus
-    function updateToggles(){
-      $('#themeToggle').setAttribute('aria-checked', state.prefs.theme==='light');
-      $('#busToggle').setAttribute('aria-checked', !!state.prefs.bus);
-      document.body.style.background = state.prefs.theme==='light'
-        ? 'linear-gradient(120deg,#f7f9ff,#f1f5ff 60%,#eef3ff)'
-        : 'linear-gradient(120deg,#0e1016,#121622 60%,#0f1520)';
-    }
-    $('#themeToggle').addEventListener('click',()=>{ state.prefs.theme = state.prefs.theme==='light'?'dark':'light'; persist(); updateToggles() })
-    $('#busToggle').addEventListener('click',()=>{ state.prefs.bus = !state.prefs.bus; persist(); updateToggles(); toast(state.prefs.bus? 'Modo ônibus ativo (conteúdos de áudio)': 'Modo ônibus desativado') })
+            listContainer.innerHTML = state.weeklyGoals.map(goal => {
+                const isDone = !!state.doneWeekly[weekKey]?.[goal.id];
+                return `
+                    <div class="bg-gray-50 p-3 rounded-xl flex justify-between items-center text-sm">
+                        <label for="wg-${goal.id}" class="flex items-center space-x-3 flex-1 cursor-pointer">
+                            <input type="checkbox" id="wg-${goal.id}" data-wgid="${goal.id}" class="form-checkbox h-5 w-5 rounded text-purple-600 focus:ring-purple-500" ${isDone ? 'checked' : ''}>
+                            <span class="${isDone ? 'line-through text-gray-400' : 'text-gray-800'}">${goal.title}</span>
+                        </label>
+                        <button data-del-wg="${goal.id}" class="text-red-500 hover:text-red-700 font-bold ml-4">✕</button>
+                    </div>
+                `;
+            }).join('');
 
-    // Persist
-    function persist(){
-      store.set('xp', state.xp); store.set('streak', state.streak); store.set('lastCheck', state.lastCheck);
-      store.set('prefs', state.prefs); store.set('tasks', state.tasks);
-      store.set('doneToday', state.doneToday); store.set('journal', state.journal);
-    }
+            $$('[data-wgid]').forEach(checkbox => checkbox.addEventListener('change', (e) => toggleWeeklyGoal(e.target.dataset.wgid, e.target.checked)));
+            $$('[data-del-wg]').forEach(btn => btn.addEventListener('click', () => removeWeeklyGoal(btn.dataset.delWg)));
+        }
 
-    // Toast
-    let toastId=null; function toast(msg){
-      clearTimeout(toastId);
-      let t = $('#toast'); if(!t){ t=document.createElement('div'); t.id='toast'; document.body.appendChild(t); Object.assign(t.style,{position:'fixed',left:'50%',bottom:'24px',transform:'translateX(-50%)',background:'rgba(20,24,34,.95)',border:'1px solid rgba(255,255,255,.10)',padding:'10px 14px',borderRadius:'12px',boxShadow:'var(--shadow)',zIndex:99}) }
-      t.textContent = msg; t.style.opacity='1'; toastId=setTimeout(()=>t.style.opacity='0',2000);
-    }
+        function getWeekKey(date) {
+            const startOfYear = new Date(date.getFullYear(), 0, 1);
+            const pastDaysOfYear = (date.getTime() - startOfYear.getTime()) / 86400000;
+            return `${date.getFullYear()}-${Math.ceil((pastDaysOfYear + startOfYear.getDay() + 1) / 7)}`;
+        }
 
-    // Init
-    (function(){
-      $('#wakeBy').value = state.prefs.wakeBy; $('#sleepAt').value = state.prefs.sleepAt; $('#xpPerLevel').value = state.prefs.xpPerLevel;
-      const j = state.journal[todayKey()]||''; $('#journal').value = j;
-      buildUI(); renderClock();
-    })()
+        function toggleWeeklyGoal(goalId, isChecked) {
+            const weekKey = getWeekKey(new Date());
 
-    // --- PWA Service Worker Registration ---
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js').then(registration => {
-          console.log('ServiceWorker registrado com sucesso:', registration.scope);
-        }).catch(err => {
-          console.log('Falha no registro do ServiceWorker:', err);
+            if (!state.doneWeekly[weekKey]) {
+                state.doneWeekly[weekKey] = {};
+            }
+
+            if (isChecked) {
+                state.doneWeekly[weekKey][goalId] = true;
+            } else {
+                delete state.doneWeekly[weekKey][goalId];
+            }
+            persist();
+            renderWeeklyGoals();
+        }
+
+        function removeWeeklyGoal(goalId) {
+            state.weeklyGoals = state.weeklyGoals.filter(g => g.id !== goalId);
+            persist();
+            renderWeeklyGoals();
+        }
+
+        function buildAgenda() {
+            const container = $('#view-agenda');
+            const days = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+            const hours = Array.from({ length: 18 }, (_, i) => `${(i + 6).toString().padStart(2, '0')}:00`); // 06:00 to 23:00
+
+            container.innerHTML = `
+                <div class="bg-white p-4 rounded-2xl shadow-sm config-item lg:col-span-1">
+                    <h3 class="font-bold text-indigo-800 mb-3">Adicionar Compromisso</h3>
+                    <div class="space-y-3">
+                        <input id="agendaEventTitle" placeholder="Nome do compromisso" class="w-full p-2 border rounded-lg">
+                        <select id="agendaEventDay" class="w-full p-2 border rounded-lg">
+                            ${days.map(d => `<option value="${d}">${d}</option>`).join('')}
+                        </select>
+                        <input id="agendaEventTime" type="time" class="w-full p-2 border rounded-lg">
+                        <button id="addAgendaEventBtn" class="w-full bg-purple-500 text-white font-semibold py-2 rounded-lg hover:bg-purple-600 transition-colors">Adicionar</button>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm config-item lg:col-span-2">
+                    <h3 class="font-bold text-indigo-800 mb-3">Sua Semana</h3>
+                    <div id="agenda-grid" class="overflow-x-auto"></div>
+                </div>
+            `;
+            
+            renderAgendaGrid();
+            $('#addAgendaEventBtn').addEventListener('click', addAgendaEvent);
+        }
+
+        function renderAgendaGrid() {
+            const gridContainer = $('#agenda-grid');
+            if (!gridContainer) return;
+            const days = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+            const hours = Array.from({ length: 18 }, (_, i) => `${(i + 6).toString().padStart(2, '0')}:00`);
+
+            let tableHTML = `<table class="w-full border-collapse text-xs text-center"><thead><tr><th class="w-12"></th>`;
+            days.forEach(day => tableHTML += `<th class="p-1 border-b">${day}</th>`);
+            tableHTML += `</tr></thead><tbody>`;
+
+            hours.forEach(hour => {
+                tableHTML += `<tr><td class="p-1 border-r font-semibold text-gray-500">${hour}</td>`;
+                days.forEach(day => {
+                    const eventKey = `${day}-${hour}`;
+                    const event = state.agendaEvents[eventKey];
+                    if (event) {
+                        tableHTML += `<td class="p-1 border align-top relative agenda-event text-white rounded-md">
+                            <div class="p-1">${event.title}</div>
+                            <button data-del-event="${eventKey}" class="absolute top-0 right-0 text-white text-xs p-1">✕</button>
+                        </td>`;
+                    } else {
+                        tableHTML += `<td class="p-1 border"></td>`;
+                    }
+                });
+                tableHTML += `</tr>`;
+            });
+
+            tableHTML += `</tbody></table>`;
+            gridContainer.innerHTML = tableHTML;
+            
+            $$('[data-del-event]').forEach(btn => btn.addEventListener('click', (e) => removeAgendaEvent(e.target.dataset.delEvent)));
+        }
+
+        function addAgendaEvent() {
+            const title = $('#agendaEventTitle').value.trim();
+            const day = $('#agendaEventDay').value;
+            const time = $('#agendaEventTime').value;
+
+            if (!title || !day || !time) {
+                alert('Por favor, preencha todos os campos do compromisso.');
+                return;
+            }
+            
+            const hour = time.split(':')[0] + ':00';
+            const eventKey = `${day}-${hour}`;
+
+            state.agendaEvents[eventKey] = { id: cid(), title: title };
+            persist();
+            renderAgendaGrid();
+
+            // Limpa os campos
+            $('#agendaEventTitle').value = '';
+            $('#agendaEventTime').value = '';
+        }
+
+        function removeAgendaEvent(eventKey) {
+            delete state.agendaEvents[eventKey];
+            persist();
+            renderAgendaGrid();
+        }
+
+        function persist() {
+            store.set('xp', state.xp);
+            store.set('streak', state.streak);
+            store.set('lastCheck', state.lastCheck);
+            store.set('prefs', state.prefs);
+            store.set('tasks', state.tasks);
+            store.set('doneToday', state.doneToday);
+            store.set('journal', state.journal);
+            store.set('weeklyGoals', state.weeklyGoals);
+            store.set('doneWeekly', state.doneWeekly);
+            store.set('agendaEvents', state.agendaEvents);
+        }
+
+        // --- INICIALIZAÇÃO ---
+        document.addEventListener('DOMContentLoaded', () => {
+            buildUI();
         });
-      });
-    }
-  </script>
+
+        // --- PWA Service Worker Registration ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js').then(registration => {
+                    console.log('ServiceWorker registrado com sucesso:', registration.scope);
+                }).catch(err => {
+                    console.log('Falha no registro do ServiceWorker:', err);
+                });
+            });
+        }
+    </script>
 </body>
 </html>
